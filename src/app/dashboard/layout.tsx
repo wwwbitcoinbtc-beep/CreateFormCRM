@@ -68,13 +68,13 @@ function CustomSidebar() {
                 <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                <Settings className="ml-2 h-4 w-4" />
+                <Settings className="mr-2 h-4 w-4" />
                 <span>تنظیمات</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <Link href="/" className='w-full'>
-                    <LogOut className="ml-2 h-4 w-4" />
+                    <LogOut className="mr-2 h-4 w-4" />
                     <span>خروج</span>
                 </Link>
                 </DropdownMenuItem>
@@ -91,9 +91,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
-        <Sidebar collapsible="icon" className="hidden lg:flex flex-col bg-background border-l">
-          <CustomSidebar />
-        </Sidebar>
         <div className="flex flex-col flex-1 min-w-0">
           <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
              <div className="flex items-center gap-2 sm:gap-4">
@@ -123,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         isActive={pathname === item.href} 
                                         className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground justify-start"
                                     >
-                                    <item.icon className="h-5 w-5 ml-2" />
+                                    <item.icon className="h-5 w-5 mr-2" />
                                     <span>{item.label}</span>
                                     </SidebarMenuButton>
                                 </Link>
@@ -142,8 +139,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             
             <div className="flex items-center gap-2 md:gap-4">
                 <div className="relative w-full max-w-xs hidden md:block">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجو..." className="pr-9 bg-card border-none" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="جستجو..." className="pl-9 bg-card border-none" />
                 </div>
                  <Button variant="outline" size="icon" className='flex-shrink-0'>
                     <Bell className="h-5 w-5"/>
@@ -166,13 +163,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
-                      <Settings className="ml-2 h-4 w-4" />
+                      <Settings className="mr-2 h-4 w-4" />
                       <span>تنظیمات</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                        <Link href="/" className='w-full'>
-                          <LogOut className="ml-2 h-4 w-4" />
+                          <LogOut className="mr-2 h-4 w-4" />
                           <span>خروج</span>
                       </Link>
                     </DropdownMenuItem>
@@ -186,6 +183,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </main>
         </div>
+        <Sidebar side="right" collapsible="icon" className="hidden lg:flex flex-col bg-background border-r">
+          <CustomSidebar />
+        </Sidebar>
       </div>
     </SidebarProvider>
   );
