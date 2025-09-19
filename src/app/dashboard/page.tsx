@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, DollarSign, Users, ShoppingCart } from 'lucide-react';
+import { ArrowUpRight, DollarSign, Users, ShoppingCart, MoreVertical, Plus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,100 +8,148 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { mockTransactions, chartData } from '@/lib/data';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, Tooltip } from 'recharts';
+import Image from 'next/image';
 
 export default function DashboardPage() {
-    const totalIncome = mockTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const totalExpense = mockTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-
-    const recentTransactions = mockTransactions.slice(0, 5);
+    const totalBalance = mockTransactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+    const recentTransactions = mockTransactions.slice(0, 4);
 
     return (
-        <div className="space-y-8">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">مجموع درآمد</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-6">
+                <Card className="bg-card border-none">
+                    <CardHeader>
+                        <CardTitle>نمای کلی</CardTitle>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>۳ نفر و @yermaldov به این دسترسی دارند.</span>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold" dir="ltr">{totalIncome.toLocaleString()} تومان</div>
-                        <p className="text-xs text-muted-foreground">%۲۰.۱+ از ماه گذشته</p>
+                       <div className="h-[250px] w-full pr-0">
+                         <ChartContainer config={{}} className="h-full w-full">
+                            <ResponsiveContainer>
+                                <LineChart
+                                    data={chartData}
+                                    margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
+                                    <Tooltip
+                                        content={({ active, payload }) => {
+                                            if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="rounded-lg border bg-card p-2 shadow-sm">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                                    درآمد
+                                                                </span>
+                                                                <span className="font-bold text-foreground">
+                                                                    {payload[0].value?.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                    <Line type="monotone" dataKey="income" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                       </div>
+                       <div className="flex justify-between items-center mt-4">
+                            <div>
+                                <p className="text-3xl font-bold text-green-500">+۱۹.۲۳٪</p>
+                                <p className="text-xs text-muted-foreground">آخرین به‌روزرسانی امروز، ۰۸:۴۹ صبح</p>
+                            </div>
+                            <div className="flex gap-1">
+                                <Button variant="outline" size="sm">۲۴ ساعت</Button>
+                                <Button variant="outline" size="sm">هفته</Button>
+                                <Button variant="secondary" size="sm">ماه</Button>
+                            </div>
+                       </div>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">اشتراک‌ها</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                <Card className="bg-card border-none">
+                    <CardHeader>
+                        <CardTitle>محبوب‌ترین کمپین‌ها</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+۲۳۵۰</div>
-                        <p className="text-xs text-muted-foreground">%۱۸۰.۱+ از ماه گذشته</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">فروش</CardTitle>
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+۱۲,۲۳۴</div>
-                        <p className="text-xs text-muted-foreground">%۱۹+ از ماه گذشته</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">فعال در حال حاضر</CardTitle>
-                        <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+۵۷۳</div>
-                        <p className="text-xs text-muted-foreground">۲۰۱+ از ساعت گذشته</p>
+                        <Table>
+                            <TableHeader>
+                                <TableRow className='border-b-border/50'>
+                                    <TableHead>رتبه</TableHead>
+                                    <TableHead>نام</TableHead>
+                                    <TableHead className="hidden md:table-cell">مدیر</TableHead>
+                                    <TableHead className="hidden lg:table-cell">تاریخ</TableHead>
+                                    <TableHead className="text-left">عملیات</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {recentTransactions.map((transaction, index) => (
+                                    <TableRow key={transaction.id} className='border-b-0'>
+                                        <TableCell className="font-medium">#{index + 1}</TableCell>
+                                        <TableCell>{transaction.description}</TableCell>
+                                        <TableCell className="hidden md:table-cell">
+                                             <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={`/avatars/0${index+1}.png`} alt="Avatar" />
+                                                    <AvatarFallback>U</AvatarFallback>
+                                                </Avatar>
+                                                <span>کاربر {index + 1}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden lg:table-cell">{new Date(transaction.date).toLocaleDateString('fa-IR')}</TableCell>
+                                        <TableCell className="text-left">
+                                            <Button variant="outline" size="sm">پیوستن</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             </div>
-
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="lg:col-span-2">
+            {/* Right Column */}
+            <div className="lg:col-span-1 space-y-6">
+                <Card className="bg-card border-none">
                     <CardHeader>
-                        <CardTitle>مرور کلی</CardTitle>
+                        <CardTitle>موجودی کل</CardTitle>
+                        <CardDescription>مجموع تمام مبالغ در کیف پول شما</CardDescription>
                     </CardHeader>
-                    <CardContent className="pr-0">
-                        <ChartContainer config={{}} className="h-[350px] w-full">
-                            <ResponsiveContainer>
-                                <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--muted))" />
-                                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator='dot' />} />
-                                    <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
+                    <CardContent className="space-y-4">
+                        <div className="text-4xl font-bold text-foreground" dir="ltr">${totalBalance.toLocaleString()}</div>
+                        <div className='relative w-full h-40 rounded-lg overflow-hidden'>
+                             <Image src="https://picsum.photos/seed/1/600/400" alt="AI Assistant" fill style={{objectFit: 'cover'}} data-ai-hint="abstract wave" />
+                             <div className="absolute inset-0 bg-black/40 flex items-end p-4">
+                                <div>
+                                    <p className="font-semibold text-white">دستیار هوش مصنوعی</p>
+                                    <p className="text-xs text-white/80">در حال به‌روزرسانی موجودی...</p>
+                                </div>
+                             </div>
+                        </div>
                     </CardContent>
                 </Card>
-                <Card>
+                 <Card className="bg-accent/50 border-accent/50">
                     <CardHeader>
-                        <CardTitle>فروش‌های اخیر</CardTitle>
-                        <CardDescription>شما در این ماه ۲۶۵ فروش داشته‌اید.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
-                             {recentTransactions.map((transaction) => (
-                                <div key={transaction.id} className="flex items-center">
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                                        <AvatarFallback>{transaction.description.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="mr-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">{transaction.description}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                             {transaction.category}
-                                        </p>
-                                    </div>
-                                    <div className="mr-auto font-medium text-left" dir="ltr">+{transaction.amount.toLocaleString()}</div>
-                                </div>
-                             ))}
+                        <div className="flex justify-between items-center">
+                            <CardTitle className='text-base'>تبلیغات</CardTitle>
+                            <span className="text-xs text-muted-foreground">بعدی &larr;</span>
                         </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-center">
+                        <h3 className="font-bold text-lg">
+                            با ۴۰٪ تخفیف به پریمیوم بروید
+                        </h3>
+                         <p className="text-sm text-muted-foreground">
+                           اشتراک خود را ارتقا دهید و از مزایای انحصاری بهره‌مند شوید.
+                        </p>
+                        <Button className="w-full">شروع کنید</Button>
                     </CardContent>
                 </Card>
             </div>
