@@ -57,29 +57,10 @@ function CustomSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2 mt-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                 <SidebarMenuButton variant="ghost" className="justify-start">
-                    <LogOut className="h-5 w-5" />
-                     <span className={`transition-opacity duration-200 ${state === 'collapsed' ? 'opacity-0' : 'opacity-100'}`}>خروج</span>
-                </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>تنظیمات</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/" className='w-full'>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>خروج</span>
-                </Link>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <SidebarMenuButton variant="ghost" className="justify-start">
+            <LogOut className="h-5 w-5" />
+             <span className={`transition-opacity duration-200 ${state === 'collapsed' ? 'opacity-0' : 'opacity-100'}`}>خروج</span>
+        </SidebarMenuButton>
       </SidebarFooter>
     </>
   );
@@ -91,6 +72,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
+        <Sidebar side="right" collapsible="icon" className="hidden lg:flex flex-col bg-background border-l">
+          <CustomSidebar />
+        </Sidebar>
+
         <div className="flex flex-col flex-1 min-w-0">
           <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
              <div className="flex items-center gap-2 sm:gap-4">
@@ -107,7 +92,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <HesaabProLogo className="w-10 h-10 text-primary" />
                             <div className="flex flex-col">
                                 <span className="text-lg font-bold text-foreground">حساب پرو</span>
-                                <span className="text-xs text-muted-foreground">نسخه تجاری</span>
                             </div>
                             </div>
                         </SidebarHeader>
@@ -118,9 +102,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <Link href={item.href} legacyBehavior passHref>
                                     <SidebarMenuButton 
                                         isActive={pathname === item.href} 
-                                        className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground justify-start"
+                                        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground justify-start"
                                     >
-                                    <item.icon className="h-5 w-5 mr-2" />
+                                    <item.icon className="h-5 w-5 ml-2" />
                                     <span>{item.label}</span>
                                     </SidebarMenuButton>
                                 </Link>
@@ -128,19 +112,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             ))}
                             </SidebarMenu>
                         </SidebarContent>
+                         <SidebarFooter className="p-2 mt-auto">
+                            <SidebarMenuButton variant="ghost" className="justify-start">
+                                <LogOut className="h-5 w-5 ml-2" />
+                                <span>خروج</span>
+                            </SidebarMenuButton>
+                        </SidebarFooter>
                     </SheetContent>
                 </Sheet>
                 <SidebarTrigger className="hidden lg:flex" />
-                 <div className="hidden sm:flex items-center gap-2">
-                    <h1 className="text-xl font-semibold">داشبورد</h1>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </div>
             </div>
             
             <div className="flex items-center gap-2 md:gap-4">
                 <div className="relative w-full max-w-xs hidden md:block">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجو..." className="pl-9 bg-card border-none" />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="جستجو..." className="pr-9 bg-card border-none" />
                 </div>
                  <Button variant="outline" size="icon" className='flex-shrink-0'>
                     <Bell className="h-5 w-5"/>
@@ -148,28 +134,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-3 px-2 h-10">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src="/avatars/01.png" />
-                        <AvatarFallback>JD</AvatarFallback>
-                      </Avatar>
-                      <div className="text-right hidden lg:block">
+                      <div className="text-left hidden lg:block">
                         <p className="font-semibold text-sm text-foreground">جان دو</p>
                         <p className="text-xs text-muted-foreground">demo@gmail.com</p>
                       </div>
                        <ChevronDown className="h-4 w-4 text-muted-foreground hidden lg:block" />
+                       <Avatar className="h-8 w-8">
+                        <AvatarImage src="/avatars/01.png" />
+                        <AvatarFallback>JD</AvatarFallback>
+                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
+                      <Settings className="ml-2 h-4 w-4" />
                       <span>تنظیمات</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                        <Link href="/" className='w-full'>
-                          <LogOut className="mr-2 h-4 w-4" />
+                          <LogOut className="ml-2 h-4 w-4" />
                           <span>خروج</span>
                       </Link>
                     </DropdownMenuItem>
@@ -177,15 +163,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-            <div className="max-w-7xl mx-auto w-full">
+          <main className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
+            <div className="w-full h-full max-w-7xl">
                 {children}
             </div>
           </main>
         </div>
-        <Sidebar side="right" collapsible="icon" className="hidden lg:flex flex-col bg-background border-r">
-          <CustomSidebar />
-        </Sidebar>
       </div>
     </SidebarProvider>
   );
