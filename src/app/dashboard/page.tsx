@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { mockTransactions, chartData } from '@/lib/data';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, Tooltip } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import Image from 'next/image';
 
 export default function DashboardPage() {
@@ -15,9 +15,9 @@ export default function DashboardPage() {
     const recentTransactions = mockTransactions.slice(0, 4);
 
     return (
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column */}
-            <div className="xl:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col gap-6">
                 <Card className="bg-card border-none">
                     <CardHeader>
                         <CardTitle>نمای کلی</CardTitle>
@@ -41,7 +41,7 @@ export default function DashboardPage() {
                                             if (active && payload && payload.length) {
                                                 return (
                                                     <div className="rounded-lg border bg-card p-2 shadow-sm">
-                                                        <div className="grid grid-cols-2 gap-2">
+                                                        <div className="grid grid-cols-1 gap-1 text-right">
                                                             <div className="flex flex-col">
                                                                 <span className="text-[0.70rem] uppercase text-muted-foreground">
                                                                     درآمد
@@ -67,7 +67,7 @@ export default function DashboardPage() {
                                 <p className="text-3xl font-bold text-green-500">+۱۹.۲۳٪</p>
                                 <p className="text-xs text-muted-foreground">آخرین به‌روزرسانی امروز، ۰۸:۴۹ صبح</p>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                                 <Button variant="outline" size="sm">۲۴ ساعت</Button>
                                 <Button variant="outline" size="sm">هفته</Button>
                                 <Button variant="secondary" size="sm">ماه</Button>
@@ -99,7 +99,7 @@ export default function DashboardPage() {
                                             <TableCell className="hidden md:table-cell">
                                                  <div className="flex items-center gap-2">
                                                     <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={`/avatars/0${index+1}.png`} alt="Avatar" />
+                                                        <AvatarImage src={`https://i.pravatar.cc/150?u=${index+1}`} alt="Avatar" />
                                                         <AvatarFallback>U</AvatarFallback>
                                                     </Avatar>
                                                     <span>کاربر {index + 1}</span>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                 </Card>
             </div>
             {/* Right Column */}
-            <div className="xl:col-span-1 space-y-6">
+            <div className="lg:col-span-1 flex flex-col gap-6">
                 <Card className="bg-card border-none">
                     <CardHeader>
                         <CardTitle>موجودی کل</CardTitle>
