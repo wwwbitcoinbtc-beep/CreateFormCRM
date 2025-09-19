@@ -8,7 +8,7 @@ import { HesaabProLogo } from '@/components/icons';
 export default function LoginPage() {
   return (
     <main className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm w-full">
+      <Card className="mx-auto max-w-sm w-full bg-card text-card-foreground">
         <CardHeader className="text-center">
           <HesaabProLogo className="w-16 h-16 mx-auto mb-4 text-primary" />
           <CardTitle className="text-2xl font-headline">ورود به حساب پرو</CardTitle>

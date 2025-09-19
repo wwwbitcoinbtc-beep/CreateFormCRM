@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen bg-background text-foreground">
         <Sidebar collapsible="icon" className="hidden lg:flex flex-col bg-sidebar text-sidebar-foreground">
           {sidebarContent}
         </Sidebar>
@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </SheetContent>
               </Sheet>
             </div>
-            <div className="flex items-center gap-4 mr-auto">
+            <div className="flex items-center gap-4 ml-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" size="icon" className="rounded-full">
