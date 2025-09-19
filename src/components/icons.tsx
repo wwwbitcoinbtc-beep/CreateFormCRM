@@ -12,10 +12,9 @@ export function HesaabProLogo(props: SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
-      <path d="M12 16v-4"></path>
-      <path d="M12 8h.01"></path>
-      <path d="M16 12h-4"></path>
+        <rect width="16" height="16" x="4" y="4" rx="2" />
+        <path d="M9 12h6" />
+        <path d="M12 9v6" />
     </svg>
   );
 }
