@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Settings, Menu, Search, Bell, Calendar as CalendarIcon, ChevronDown, User } from 'lucide-react';
+import { LogOut, Settings, Menu, Search, Bell, ChevronDown, PanelLeft } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -14,6 +14,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -23,14 +25,16 @@ import { navItems } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function CustomSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
 
-  const sidebarContent = (
+  return (
     <>
       <SidebarHeader className="p-2">
         <div className="flex items-center gap-2 p-2">
           <HesaabProLogo className="w-8 h-8 text-foreground" />
+          <span className={`font-bold transition-opacity duration-200 ${state === 'collapsed' ? 'opacity-0' : 'opacity-100'}`}>حساب پرو</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -41,23 +45,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarMenuButton 
                         isActive={pathname === item.href} 
                         variant="ghost"
-                        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground justify-center"
+                        className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground justify-start"
                         tooltip={item.label}
                     >
                         <item.icon className="h-5 w-5" />
-                        <span className="sr-only">{item.label}</span>
+                        <span className={`transition-opacity duration-200 ${state === 'collapsed' ? 'opacity-0' : 'opacity-100'}`}>{item.label}</span>
                     </SidebarMenuButton>
                 </Link>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-2 mt-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-full">
+                 <SidebarMenuButton variant="ghost" className="justify-start">
                     <LogOut className="h-5 w-5" />
-                </Button>
+                     <span className={`transition-opacity duration-200 ${state === 'collapsed' ? 'opacity-0' : 'opacity-100'}`}>خروج</span>
+                </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
@@ -78,16 +83,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </SidebarFooter>
     </>
   );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
-        <Sidebar collapsible="icon" className="hidden lg:flex flex-col bg-background border-l w-16">
-          {sidebarContent}
+        <Sidebar collapsible="icon" className="hidden lg:flex flex-col bg-background border-l">
+          <CustomSidebar />
         </Sidebar>
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6 lg:px-8">
-             <div className="flex items-center gap-4">
+          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+             <div className="flex items-center gap-2 sm:gap-4">
                 <Sheet>
                     <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="lg:hidden">
@@ -96,7 +105,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Button>
                     </SheetTrigger>
                     <SheetContent side="right" className="flex flex-col bg-background border-l p-0 w-72">
-                        {/* A modified sidebar for mobile view */}
                          <SidebarHeader>
                             <div className="flex items-center gap-3 p-4">
                             <HesaabProLogo className="w-10 h-10 text-primary" />
@@ -125,6 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </SidebarContent>
                     </SheetContent>
                 </Sheet>
+                <SidebarTrigger className="hidden lg:flex" />
                  <div className="hidden sm:flex items-center gap-2">
                     <h1 className="text-xl font-semibold">داشبورد</h1>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 sm:p-6 md:p-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
             <div className="max-w-7xl mx-auto w-full">
                 {children}
             </div>

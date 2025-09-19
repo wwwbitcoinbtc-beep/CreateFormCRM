@@ -15,9 +15,9 @@ export default function DashboardPage() {
     const recentTransactions = mockTransactions.slice(0, 4);
 
     return (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 xl:grid-cols-3">
             {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-6">
                 <Card className="bg-card border-none">
                     <CardHeader>
                         <CardTitle>نمای کلی</CardTitle>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                 </Card>
             </div>
             {/* Right Column */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="xl:col-span-1 space-y-6">
                 <Card className="bg-card border-none">
                     <CardHeader>
                         <CardTitle>موجودی کل</CardTitle>
