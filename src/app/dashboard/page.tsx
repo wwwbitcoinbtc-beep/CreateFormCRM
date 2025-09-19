@@ -62,7 +62,7 @@ export default function DashboardPage() {
                             </ResponsiveContainer>
                         </ChartContainer>
                        </div>
-                       <div className="flex justify-between items-center mt-4">
+                       <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
                             <div>
                                 <p className="text-3xl font-bold text-green-500">+۱۹.۲۳٪</p>
                                 <p className="text-xs text-muted-foreground">آخرین به‌روزرسانی امروز، ۰۸:۴۹ صبح</p>
@@ -80,38 +80,40 @@ export default function DashboardPage() {
                         <CardTitle>محبوب‌ترین کمپین‌ها</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow className='border-b-border/50'>
-                                    <TableHead>رتبه</TableHead>
-                                    <TableHead>نام</TableHead>
-                                    <TableHead className="hidden md:table-cell">مدیر</TableHead>
-                                    <TableHead className="hidden lg:table-cell">تاریخ</TableHead>
-                                    <TableHead className="text-left">عملیات</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentTransactions.map((transaction, index) => (
-                                    <TableRow key={transaction.id} className='border-b-0'>
-                                        <TableCell className="font-medium">#{index + 1}</TableCell>
-                                        <TableCell>{transaction.description}</TableCell>
-                                        <TableCell className="hidden md:table-cell">
-                                             <div className="flex items-center gap-2">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={`/avatars/0${index+1}.png`} alt="Avatar" />
-                                                    <AvatarFallback>U</AvatarFallback>
-                                                </Avatar>
-                                                <span>کاربر {index + 1}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="hidden lg:table-cell">{new Date(transaction.date).toLocaleDateString('fa-IR')}</TableCell>
-                                        <TableCell className="text-left">
-                                            <Button variant="outline" size="sm">پیوستن</Button>
-                                        </TableCell>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className='border-b-border/50'>
+                                        <TableHead>رتبه</TableHead>
+                                        <TableHead>نام</TableHead>
+                                        <TableHead className="hidden md:table-cell">مدیر</TableHead>
+                                        <TableHead className="hidden lg:table-cell">تاریخ</TableHead>
+                                        <TableHead className="text-left">عملیات</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentTransactions.map((transaction, index) => (
+                                        <TableRow key={transaction.id} className='border-b-0'>
+                                            <TableCell className="font-medium">#{index + 1}</TableCell>
+                                            <TableCell>{transaction.description}</TableCell>
+                                            <TableCell className="hidden md:table-cell">
+                                                 <div className="flex items-center gap-2">
+                                                    <Avatar className="h-6 w-6">
+                                                        <AvatarImage src={`/avatars/0${index+1}.png`} alt="Avatar" />
+                                                        <AvatarFallback>U</AvatarFallback>
+                                                    </Avatar>
+                                                    <span>کاربر {index + 1}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="hidden lg:table-cell">{new Date(transaction.date).toLocaleDateString('fa-IR')}</TableCell>
+                                            <TableCell className="text-left">
+                                                <Button variant="outline" size="sm">پیوستن</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

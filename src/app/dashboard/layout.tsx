@@ -85,8 +85,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar collapsible="icon" className="hidden lg:flex flex-col bg-background border-l w-16">
           {sidebarContent}
         </Sidebar>
-        <div className="flex flex-col flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 lg:px-6 gap-4">
+        <div className="flex flex-col flex-1 min-w-0">
+          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6 lg:px-8">
              <div className="flex items-center gap-4">
                 <Sheet>
                     <SheetTrigger asChild>
@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SheetContent side="right" className="flex flex-col bg-background border-l p-0 w-72">
                         {/* A modified sidebar for mobile view */}
                          <SidebarHeader>
-                            <div className="flex items-center gap-3 p-2">
+                            <div className="flex items-center gap-3 p-4">
                             <HesaabProLogo className="w-10 h-10 text-primary" />
                             <div className="flex flex-col">
                                 <span className="text-lg font-bold text-foreground">حساب پرو</span>
@@ -113,9 +113,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <Link href={item.href} legacyBehavior passHref>
                                     <SidebarMenuButton 
                                         isActive={pathname === item.href} 
-                                        className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                                        className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground justify-start"
                                     >
-                                    <item.icon className="h-5 w-5" />
+                                    <item.icon className="h-5 w-5 ml-2" />
                                     <span>{item.label}</span>
                                     </SidebarMenuButton>
                                 </Link>
@@ -125,24 +125,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </SidebarContent>
                     </SheetContent>
                 </Sheet>
-                 <div className="flex items-center gap-2">
+                 <div className="hidden sm:flex items-center gap-2">
                     <h1 className="text-xl font-semibold">داشبورد</h1>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </div>
             </div>
             
-            <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
-                <div className="relative w-full max-w-sm hidden md:block">
+            <div className="flex items-center gap-2 md:gap-4">
+                <div className="relative w-full max-w-xs hidden md:block">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="جستجو..." className="pr-9 bg-card border-none" />
                 </div>
-                 <Button variant="outline" size="sm" className='hidden sm:flex items-center gap-2 h-9'>
-                    <Bell className="h-4 w-4"/>
-                    <span>۲ جدید</span>
-                </Button>
-                <Button variant="outline" className='hidden sm:flex items-center gap-2 h-9'>
-                    <CalendarIcon className="h-4 w-4"/>
-                    <span>امروز، ۸ فروردین</span>
+                 <Button variant="outline" size="icon" className='flex-shrink-0'>
+                    <Bell className="h-5 w-5"/>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -155,7 +150,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <p className="font-semibold text-sm text-foreground">جان دو</p>
                         <p className="text-xs text-muted-foreground">demo@gmail.com</p>
                       </div>
-                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                       <ChevronDown className="h-4 w-4 text-muted-foreground hidden lg:block" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -176,7 +171,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 sm:p-6 md:p-8">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 md:p-8">
+            <div className="max-w-7xl mx-auto w-full">
+                {children}
+            </div>
+          </main>
         </div>
       </div>
     </SidebarProvider>
