@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Sidebar>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 sm:px-6">
+          <header className="fixed top-0 z-10 flex h-16 w-full items-center justify-between border-b bg-background px-4 sm:px-6">
              <div className="flex items-center gap-2 sm:gap-4">
                 <Sheet>
                     <SheetTrigger asChild>
@@ -120,7 +120,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </SidebarFooter>
                     </SheetContent>
                 </Sheet>
-                <SidebarTrigger className="hidden lg:flex" />
+                 <div className="hidden lg:flex items-center gap-2">
+                    <SidebarTrigger />
+                </div>
             </div>
             
             <div className="flex items-center gap-2 md:gap-4">
@@ -163,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </DropdownMenu>
             </div>
           </header>
-          <main className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8">
+          <main className="flex flex-1 flex-col items-center p-4 sm:p-6 md:p-8 mt-16">
             <div className="w-full h-full max-w-7xl">
                 {children}
             </div>
