@@ -21,17 +21,39 @@ declare const jalaali: any;
 
 function App() {
   // State for data
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
-  const [purchaseContracts, setPurchaseContracts] = useState<PurchaseContract[]>(initialPurchaseContracts);
-  const [supportContracts, setSupportContracts] = useState<SupportContract[]>(initialSupportContracts);
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+  const [users, setUsers] = useState<User[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [purchaseContracts, setPurchaseContracts] = useState<PurchaseContract[]>([]);
+  const [supportContracts, setSupportContracts] = useState<SupportContract[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   
   // App state
   const [activePage, setActivePage] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // In a real app, you would fetch from your API
+        // For now, we use initial data as a fallback.
+        setUsers(initialUsers);
+        setCustomers(initialCustomers);
+        setPurchaseContracts(initialPurchaseContracts);
+        setSupportContracts(initialSupportContracts);
+        setTickets(initialTickets);
+      } catch (err) {
+        setError("Failed to load initial data.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSaveUser = (userData: User | Omit<User, 'id'>) => {
     if ('id' in userData) setUsers(users.map(u => u.id === userData.id ? { ...u, ...userData } as User : u));
@@ -99,18 +121,16 @@ function App() {
 
   const handleToggleWork = (itemId: number, isFromReferral: boolean) => {
       const updateTicketWork = (ticket: Ticket): Ticket => {
-          // If the work is running, we stop it and mark it as finished.
           if (ticket.status === 'در حال پیگیری' && ticket.workSessionStartedAt) {
               const sessionStart = new Date(ticket.workSessionStartedAt);
               const durationSeconds = (new Date().getTime() - sessionStart.getTime()) / 1000;
               return { 
                   ...ticket, 
-                  status: 'اتمام یافته', // Change status to 'Finished'
+                  status: 'اتمام یافته',
                   workSessionStartedAt: undefined, 
                   totalWorkDuration: ticket.totalWorkDuration + durationSeconds 
               };
           } 
-          // If the work is not started, we start it.
           else if (ticket.status === 'انجام نشده') {
               return { 
                   ...ticket, 
@@ -118,7 +138,6 @@ function App() {
                   workSessionStartedAt: new Date().toISOString() 
               };
           }
-          // For any other status, do nothing.
           return ticket;
       };
 
@@ -150,12 +169,11 @@ function App() {
           id: Date.now(),
           assignedTo: referredToUsername,
           lastUpdateDate: formatJalaaliDateTime(now),
-          // status, workSessionStartedAt, and totalWorkDuration are preserved from ticketToRefer
           editableUntil: ticketToRefer.editableUntil,
           updates: [
             ...ticketToRefer.updates,
             {
-              id: Date.now() + 1, // Ensure unique ID
+              id: Date.now() + 1,
               author: referredBy.username,
               date: formatJalaaliDateTime(now),
               description: `ارجاع از ${referredBy.username} به ${referredToUsername}`,
@@ -181,6 +199,14 @@ function App() {
   };
   
   const handleLogout = () => setCurrentUser(null);
+
+  if (loading) {
+      return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+       return <div className="flex h-screen items-center justify-center text-red-500">{error}</div>;
+  }
 
   if (!currentUser) return <LoginPage onLogin={handleLogin} users={users} />;
   
