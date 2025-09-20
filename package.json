@@ -6,20 +6,25 @@
   "scripts": {
     "dev": "vite --port 9002 --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "concurrently \"npm run server\" \"npm run dev\"",
+    "server": "node server.js",
+    "migrate": "knex migrate:latest"
   },
   "dependencies": {
-    "react-dom": "18.3.1",
-    "react": "18.3.1",
     "@google/genai": "latest",
-    "knex": "^3.1.0",
-    "tedious": "^18.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "knex": "^3.1.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tedious": "^18.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

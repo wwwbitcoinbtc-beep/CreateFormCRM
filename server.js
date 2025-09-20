@@ -1,30 +1,141 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
-import Knex from 'knex';
+import knex from 'knex';
 import knexConfig from './knexfile.js';
 
 const app = express();
-const port = 3001;
+const db = knex(knexConfig.development);
 
-const knex = Knex(knexConfig.development);
+const PORT = process.env.PORT || 3001;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Test DB connection
-knex.raw('SELECT 1').then(() => {
-    console.log('SQL Server connected successfully.');
-}).catch((err) => {
-    console.error('Failed to connect to SQL Server:', err);
+
+// API Routes
+app.get('/', (req, res) => {
+  res.send('<h1>CRM Backend Server is running</h1>');
 });
 
-// --- API Endpoints ---
+// --- Users API ---
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await db('users').select('*');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching users', error: err });
+  }
+});
 
-// Login
+// --- Customers API ---
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await db('customers').select('*');
+    res.json(customers);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching customers', error: err });
+  }
+});
+
+// --- Purchase Contracts API ---
+app.get('/api/purchase-contracts', async (req, res) => {
+  try {
+    const contracts = await db('purchase_contracts').select('*');
+    res.json(contracts);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching purchase contracts', error: err });
+  }
+});
+
+// --- Support Contracts API ---
+app.get('/api/support-contracts', async (req, res) => {
+  try {
+    const contracts = await db('support_contracts').select('*');
+    res.json(contracts);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching support contracts', error: err });
+  }
+});
+
+// --- Tickets API ---
+app.get('/api/tickets', async (req, res) => {
+  try {
+    const tickets = await db('tickets').select('*');
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching tickets', error: err });
+  }
+});
+
+// --- Referrals API ---
+app.get('/api/referrals', async (req, res) => {
+  try {
+    const referrals = await db('referrals')
+      .join('tickets', 'referrals.ticket_id', '=', 'tickets.id')
+      .select(
+        'referrals.id as id',
+        'referrals.referredBy',
+        'referrals.referredTo',
+        'referrals.referralDate',
+        'tickets.id as ticket_id',
+        'tickets.ticketNumber',
+        'tickets.title',
+        'tickets.description',
+        'tickets.customerId',
+        'tickets.creationDateTime',
+        'tickets.lastUpdateDate',
+        'tickets.status',
+        'tickets.priority',
+        'tickets.type',
+        'tickets.channel',
+        'tickets.assignedTo',
+        'tickets.attachments',
+        'tickets.editableUntil',
+        'tickets.workSessionStartedAt',
+        'tickets.totalWorkDuration'
+      );
+
+    const result = referrals.map(r => ({
+      id: r.id,
+      referredBy: r.referredBy,
+      referredTo: r.referredTo,
+      referralDate: r.referralDate,
+      ticket: {
+        id: r.ticket_id,
+        ticketNumber: r.ticketNumber,
+        title: r.title,
+        description: r.description,
+        customerId: r.customerId,
+        creationDateTime: r.creationDateTime,
+        lastUpdateDate: r.lastUpdateDate,
+        status: r.status,
+        priority: r.priority,
+        type: r.type,
+        channel: r.channel,
+        assignedTo: r.assignedTo,
+        attachments: r.attachments,
+        editableUntil: r.editableUntil,
+        workSessionStartedAt: r.workSessionStartedAt,
+        totalWorkDuration: r.totalWorkDuration,
+        updates: [], // Note: updates are not fetched in this simplified query
+      }
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching referrals:', err);
+    res.status(500).json({ message: 'Error fetching referrals', error: err.message });
+  }
+});
+
+// --- Login API ---
 app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
     try {
-        const { username, password } = req.body;
-        const user = await knex('users').where({ username, password }).first();
+        const user = await db('users').where({ username, password }).first();
         if (user) {
             // In a real app, don't send the password back
             const { password, ...userWithoutPassword } = user;
@@ -32,186 +143,105 @@ app.post('/api/login', async (req, res) => {
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
-    } catch (error) {
-        res.status(500).json({ message: 'Error logging in', error: error.message });
+    } catch (err) {
+        res.status(500).json({ message: 'Login failed', error: err });
     }
 });
 
+// Generic CRUD operations
 
-// Generic GET endpoint
-const getData = async (tableName, res) => {
-    try {
-        const data = await knex(tableName).select('*');
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ message: `Error fetching ${tableName}`, error: error.message });
-    }
+// Helper to parse array fields
+const parseArrayFields = (body, fields) => {
+    const parsedBody = { ...body };
+    fields.forEach(field => {
+        if (parsedBody[field]) {
+            parsedBody[field] = JSON.stringify(parsedBody[field]);
+        }
+    });
+    return parsedBody;
 };
 
-// Generic POST endpoint
-const postData = async (tableName, req, res) => {
+// POST (Create)
+app.post('/api/:table', async (req, res) => {
+    const { table } = req.params;
+    const arrayFields = {
+        users: ['accessibleMenus'],
+        customers: ['mobileNumbers', 'emails', 'phone', 'paymentMethods'],
+        purchase_contracts: ['paymentMethods'],
+        support_contracts: ['supportType'],
+        tickets: ['attachments', 'updates']
+    };
     try {
-        const [newItem] = await knex(tableName).insert(req.body).returning('*');
+        const body = parseArrayFields(req.body, arrayFields[table] || []);
+        const [newItem] = await db(table).insert(body).returning('*');
         res.status(201).json(newItem);
-    } catch (error) {
-        res.status(500).json({ message: `Error creating ${tableName}`, error: error.message });
+    } catch (err) {
+        res.status(500).json({ message: `Error creating item in ${table}`, error: err.message });
     }
-};
+});
 
-// Generic PUT endpoint
-const putData = async (tableName, req, res) => {
-    try {
-        const { id } = req.params;
-        const [updatedItem] = await knex(tableName).where({ id }).update(req.body).returning('*');
+// PUT (Update)
+app.put('/api/:table/:id', async (req, res) => {
+    const { table, id } = req.params;
+    const arrayFields = {
+        users: ['accessibleMenus'],
+        customers: ['mobileNumbers', 'emails', 'phone', 'paymentMethods'],
+        purchase_contracts: ['paymentMethods'],
+        support_contracts: ['supportType'],
+        tickets: ['attachments', 'updates']
+    };
+     try {
+        const body = parseArrayFields(req.body, arrayFields[table] || []);
+        const [updatedItem] = await db(table).where({ id }).update(body).returning('*');
         if (updatedItem) {
             res.json(updatedItem);
         } else {
             res.status(404).json({ message: 'Item not found' });
         }
-    } catch (error) {
-        res.status(500).json({ message: `Error updating ${tableName}`, error: error.message });
+    } catch (err) {
+        res.status(500).json({ message: `Error updating item in ${table}`, error: err.message });
     }
-};
+});
 
-// Generic DELETE endpoint
-const deleteData = async (tableName, req, res) => {
+
+// DELETE
+app.delete('/api/:table/:id', async (req, res) => {
+    const { table, id } = req.params;
     try {
-        const { id } = req.params;
-        const deletedCount = await knex(tableName).where({ id }).del();
-        if (deletedCount > 0) {
-            res.status(204).send();
+        const count = await db(table).where({ id }).del();
+        if (count > 0) {
+            res.status(204).send(); // No Content
         } else {
             res.status(404).json({ message: 'Item not found' });
         }
-    } catch (error) {
-        res.status(500).json({ message: `Error deleting ${tableName}`, error: error.message });
-    }
-};
-
-// Generic Delete Many endpoint
-const deleteMany = async (tableName, req, res) => {
-    try {
-        const { ids } = req.body;
-        if (!ids || !Array.isArray(ids)) {
-            return res.status(400).json({ message: 'Invalid input: "ids" must be an array.' });
-        }
-        const deletedCount = await knex(tableName).whereIn('id', ids).del();
-        res.status(200).json({ message: `${deletedCount} items deleted.` });
-    } catch (error) {
-        res.status(500).json({ message: `Error deleting multiple items from ${tableName}`, error: error.message });
-    }
-};
-
-
-// --- Route Definitions ---
-
-// Users
-app.get('/api/users', (req, res) => getData('users', res));
-app.post('/api/users', (req, res) => postData('users', req, res));
-app.put('/api/users/:id', (req, res) => putData('users', req, res));
-app.delete('/api/users/:id', (req, res) => deleteData('users', req, res));
-app.post('/api/users/delete-many', (req, res) => deleteMany('users', req, res));
-
-// Customers
-app.get('/api/customers', (req, res) => getData('customers', res));
-app.post('/api/customers', (req, res) => postData('customers', req, res));
-app.put('/api/customers/:id', (req, res) => putData('customers', req, res));
-app.delete('/api/customers/:id', (req, res) => deleteData('customers', req, res));
-app.post('/api/customers/delete-many', (req, res) => deleteMany('customers', req, res));
-
-// Purchase Contracts
-app.get('/api/purchase-contracts', (req, res) => getData('purchase_contracts', res));
-app.post('/api/purchase-contracts', (req, res) => postData('purchase_contracts', req, res));
-app.put('/api/purchase-contracts/:id', (req, res) => putData('purchase_contracts', req, res));
-app.delete('/api/purchase-contracts/:id', (req, res) => deleteData('purchase_contracts', req, res));
-app.post('/api/purchase-contracts/delete-many', (req, res) => deleteMany('purchase_contracts', req, res));
-
-// Support Contracts
-app.get('/api/support-contracts', (req, res) => getData('support_contracts', res));
-app.post('/api/support-contracts', (req, res) => postData('support_contracts', req, res));
-app.put('/api/support-contracts/:id', (req, res) => putData('support_contracts', req, res));
-app.delete('/api/support-contracts/:id', (req, res) => deleteData('support_contracts', req, res));
-app.post('/api/support-contracts/delete-many', (req, res) => deleteMany('support_contracts', req, res));
-
-// Tickets
-app.get('/api/tickets', async (req, res) => {
-    try {
-        const tickets = await knex('tickets').select(
-            'id', 'ticketNumber', 'title', 'description', 'customerId',
-            'creationDateTime', 'lastUpdateDate', 'status', 'priority', 'type',
-            'channel', 'assignedTo', 'attachments', 'editableUntil',
-            'workSessionStartedAt', 'totalWorkDuration'
-        );
-        res.json(tickets);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching tickets', error: error.message });
+    } catch (err) {
+        res.status(500).json({ message: `Error deleting item from ${table}`, error: err.message });
     }
 });
-app.post('/api/tickets', (req, res) => postData('tickets', req, res));
-app.put('/api/tickets/:id', (req, res) => putData('tickets', req, res));
-app.delete('/api/tickets/:id', (req, res) => deleteData('tickets', req, res));
 
-// Referrals
-app.get('/api/referrals', async (req, res) => {
-    try {
-        const referrals = await knex('referrals')
-            .join('tickets', 'referrals.ticket_id', '=', 'tickets.id')
-            .select(
-                'referrals.id as id',
-                'referrals.referredBy',
-                'referrals.referredTo',
-                'referrals.referralDate',
-                knex.raw(`json_build_object(
-                    'id', tickets.id,
-                    'ticketNumber', tickets.ticketNumber,
-                    'title', tickets.title,
-                    'description', tickets.description,
-                    'customerId', tickets.customerId,
-                    'creationDateTime', tickets.creationDateTime,
-                    'lastUpdateDate', tickets.lastUpdateDate,
-                    'status', tickets.status,
-                    'priority', tickets.priority,
-                    'type', tickets.type,
-                    'channel', tickets.channel,
-                    'assignedTo', tickets.assignedTo,
-                    'attachments', tickets.attachments,
-                    'editableUntil', tickets.editableUntil,
-                    'workSessionStartedAt', tickets.workSessionStartedAt,
-                    'totalWorkDuration', tickets.totalWorkDuration,
-                    'updates', '[]'::json
-                ) as ticket`)
-            );
-
-        res.json(referrals.map(r => ({ ...r, ticket: JSON.parse(r.ticket) }))); // Parse the JSON string
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching referrals', error: error.message });
+// DELETE MANY
+app.post('/api/:table/delete-many', async (req, res) => {
+    const { table } = req.params;
+    const { ids } = req.body; // Expect an array of IDs
+    if (!ids || !Array.isArray(ids)) {
+        return res.status(400).json({ message: 'Invalid request: "ids" must be an array.' });
     }
-});
-app.post('/api/referrals', async (req, res) => {
-     try {
-        const { ticket_id, referredBy, referredTo, referralDate } = req.body;
-        
-        // Start a transaction
-        await knex.transaction(async trx => {
-            // 1. Insert the referral
-            const [newReferral] = await trx('referrals').insert({ ticket_id, referredBy, referredTo, referralDate }).returning('*');
-
-            // 2. Update the ticket status
-            await trx('tickets').where({ id: ticket_id }).update({ status: 'ارجاع شده', assignedTo: referredTo });
-
-            // 3. Fetch the updated ticket to include in the response
-            const ticket = await trx('tickets').where({ id: ticket_id }).first();
-            
-             // 4. Combine and send response
-            res.status(201).json({ ...newReferral, ticket });
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating referral', error: error.message });
+    try {
+        const count = await db(table).whereIn('id', ids).del();
+        res.status(200).json({ message: `${count} items deleted successfully.` });
+    } catch (err) {
+        res.status(500).json({ message: `Error deleting items from ${table}`, error: err.message });
     }
 });
 
 
 // Start server
-app.listen(port, () => {
-    console.log(`Server is listening on *: ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is listening on *:${PORT}`);
+  db.raw('SELECT 1').then(() => {
+    console.log('SQL Server connected successfully.');
+  }).catch((e) => {
+    console.error('Failed to connect to SQL Server.');
+    console.error(e);
+  });
 });
