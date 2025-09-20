@@ -10,9 +10,9 @@ import ReportsPage from './pages/ReportsPage';
 import LoginPage from './pages/LoginPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import ReferralsPage from './pages/ReferralsPage';
+import apiService from './apiService';
 
 import { User, Customer, PurchaseContract, SupportContract, Ticket, Referral } from './types';
-import { initialUsers, initialCustomers, initialPurchaseContracts, initialSupportContracts, initialTickets } from './data';
 import { MenuIcon } from './components/icons/MenuIcon';
 import { formatJalaali, formatJalaaliDateTime } from './utils/dateFormatter';
 
@@ -35,171 +35,279 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
       try {
-        // In a real app, you would fetch from your API
-        // For now, we use initial data as a fallback.
-        setUsers(initialUsers);
-        setCustomers(initialCustomers);
-        setPurchaseContracts(initialPurchaseContracts);
-        setSupportContracts(initialSupportContracts);
-        setTickets(initialTickets);
-      } catch (err) {
-        setError("Failed to load initial data.");
+        setLoading(true);
+        setError(null);
+        const [usersData, customersData, purchaseContractsData, supportContractsData, ticketsData, referralsData] = await Promise.all([
+          apiService.get('/users'),
+          apiService.get('/customers'),
+          apiService.get('/purchase-contracts'),
+          apiService.get('/support-contracts'),
+          apiService.get('/tickets'),
+          apiService.get('/referrals'),
+        ]);
+        setUsers(usersData);
+        setCustomers(customersData);
+        setPurchaseContracts(purchaseContractsData);
+        setSupportContracts(supportContractsData);
+        setTickets(ticketsData);
+        setReferrals(referralsData);
+      } catch (err: any) {
+        setError("Failed to load initial data from server. Is the backend running?");
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
-  const handleSaveUser = (userData: User | Omit<User, 'id'>) => {
-    if ('id' in userData) setUsers(users.map(u => u.id === userData.id ? { ...u, ...userData } as User : u));
-    else setUsers([...users, { ...userData, id: Date.now() } as User]);
+  useEffect(() => {
+    if (currentUser) {
+        fetchData();
+    }
+  }, [currentUser]);
+
+  const handleSaveUser = async (userData: User | Omit<User, 'id'>) => {
+    try {
+        if ('id' in userData) {
+            const updatedUser = await apiService.put(`/users/${userData.id}`, userData);
+            setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+        } else {
+            const newUser = await apiService.post('/users', userData);
+            setUsers([...users, newUser]);
+        }
+    } catch (error) {
+        console.error("Failed to save user:", error);
+    }
   };
 
-  const handleDeleteUser = (userId: number) => setUsers(users.filter(u => u.id !== userId));
-  const handleDeleteUsers = (userIds: number[]) => setUsers(users.filter(u => !userIds.includes(u.id)));
+  const handleDeleteUser = async (userId: number) => {
+    try {
+        await apiService.del(`/users/${userId}`);
+        setUsers(users.filter(u => u.id !== userId));
+    } catch (error) {
+        console.error("Failed to delete user:", error);
+    }
+  };
+
+  const handleDeleteUsers = async (userIds: number[]) => {
+    try {
+        await apiService.post('/users/delete-many', { ids: userIds });
+        setUsers(users.filter(u => !userIds.includes(u.id)));
+    } catch (error) {
+        console.error("Failed to delete users:", error);
+    }
+  };
   
-  const handleSaveCustomer = (customerData: Customer | Omit<Customer, 'id'>) => {
-    if ('id' in customerData) setCustomers(customers.map(c => c.id === customerData.id ? { ...c, ...customerData } : c));
-    else setCustomers([...customers, { ...customerData, id: Date.now() } as Customer]);
+  const handleSaveCustomer = async (customerData: Customer | Omit<Customer, 'id'>) => {
+    try {
+        if ('id' in customerData) {
+            const updatedCustomer = await apiService.put(`/customers/${customerData.id}`, customerData);
+            setCustomers(customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+        } else {
+            const newCustomer = await apiService.post('/customers', customerData);
+            setCustomers([...customers, newCustomer]);
+        }
+    } catch (error) {
+        console.error("Failed to save customer:", error);
+    }
   };
 
-  const handleDeleteCustomer = (customerId: number) => setCustomers(customers.filter(c => c.id !== customerId));
-  const handleDeleteCustomers = (customerIds: number[]) => setCustomers(customers.filter(c => !customerIds.includes(c.id)));
-
-  const handleSavePurchaseContract = (contractData: PurchaseContract | Omit<PurchaseContract, 'id'>) => {
-    if ('id' in contractData) setPurchaseContracts(purchaseContracts.map(c => c.id === contractData.id ? { ...c, ...contractData } : c));
-    else setPurchaseContracts([...purchaseContracts, { ...contractData, id: Date.now() } as PurchaseContract]);
+  const handleDeleteCustomer = async (customerId: number) => {
+    try {
+        await apiService.del(`/customers/${customerId}`);
+        setCustomers(customers.filter(c => c.id !== customerId));
+    } catch (error) {
+        console.error("Failed to delete customer:", error);
+    }
   };
-
-  const handleDeletePurchaseContract = (contractId: number) => setPurchaseContracts(purchaseContracts.filter(c => c.id !== contractId));
-  const handleDeletePurchaseContracts = (contractIds: number[]) => setPurchaseContracts(purchaseContracts.filter(c => !contractIds.includes(c.id)));
   
-  const handleSaveSupportContract = (contractData: SupportContract | Omit<SupportContract, 'id'>) => {
-    if ('id' in contractData) setSupportContracts(supportContracts.map(c => c.id === contractData.id ? { ...c, ...contractData } : c));
-    else setSupportContracts([...supportContracts, { ...contractData, id: Date.now() } as SupportContract]);
+  const handleDeleteCustomers = async (customerIds: number[]) => {
+    try {
+        await apiService.post('/customers/delete-many', { ids: customerIds });
+        setCustomers(customers.filter(c => !customerIds.includes(c.id)));
+    } catch (error) {
+        console.error("Failed to delete customers:", error);
+    }
   };
 
-  const handleDeleteSupportContract = (contractId: number) => setSupportContracts(supportContracts.filter(c => c.id !== contractId));
-  const handleDeleteSupportContracts = (contractIds: number[]) => setSupportContracts(supportContracts.filter(c => !contractIds.includes(c.id)));
+  const handleSavePurchaseContract = async (contractData: PurchaseContract | Omit<PurchaseContract, 'id'>) => {
+     try {
+        if ('id' in contractData) {
+            const updatedContract = await apiService.put(`/purchase-contracts/${contractData.id}`, contractData);
+            setPurchaseContracts(purchaseContracts.map(c => c.id === updatedContract.id ? updatedContract : c));
+        } else {
+            const newContract = await apiService.post('/purchase-contracts', contractData);
+            setPurchaseContracts([...purchaseContracts, newContract]);
+        }
+    } catch (error) {
+        console.error("Failed to save purchase contract:", error);
+    }
+  };
+
+  const handleDeletePurchaseContract = async (contractId: number) => {
+    try {
+        await apiService.del(`/purchase-contracts/${contractId}`);
+        setPurchaseContracts(purchaseContracts.filter(c => c.id !== contractId));
+    } catch (error) {
+        console.error("Failed to delete purchase contract:", error);
+    }
+  };
   
-  const handleSaveTicket = (ticketData: Ticket | Omit<Ticket, 'id'>, isFromReferral: boolean) => {
+  const handleDeletePurchaseContracts = async (contractIds: number[]) => {
+    try {
+        await apiService.post('/purchase-contracts/delete-many', { ids: contractIds });
+        setPurchaseContracts(purchaseContracts.filter(c => !contractIds.includes(c.id)));
+    } catch (error) {
+        console.error("Failed to delete purchase contracts:", error);
+    }
+  };
+  
+  const handleSaveSupportContract = async (contractData: SupportContract | Omit<SupportContract, 'id'>) => {
+    try {
+        if ('id' in contractData) {
+            const updatedContract = await apiService.put(`/support-contracts/${contractData.id}`, contractData);
+            setSupportContracts(supportContracts.map(c => c.id === updatedContract.id ? updatedContract : c));
+        } else {
+            const newContract = await apiService.post('/support-contracts', contractData);
+            setSupportContracts([...supportContracts, newContract]);
+        }
+    } catch (error) {
+        console.error("Failed to save support contract:", error);
+    }
+  };
+
+  const handleDeleteSupportContract = async (contractId: number) => {
+     try {
+        await apiService.del(`/support-contracts/${contractId}`);
+        setSupportContracts(supportContracts.filter(c => c.id !== contractId));
+    } catch (error) {
+        console.error("Failed to delete support contract:", error);
+    }
+  };
+  
+  const handleDeleteSupportContracts = async (contractIds: number[]) => {
+    try {
+        await apiService.post('/support-contracts/delete-many', { ids: contractIds });
+        setSupportContracts(supportContracts.filter(c => !contractIds.includes(c.id)));
+    } catch (error) {
+        console.error("Failed to delete support contracts:", error);
+    }
+  };
+  
+  const handleSaveTicket = async (ticketData: Ticket | Omit<Ticket, 'id'>, isFromReferral: boolean) => {
       const now = new Date();
-      if ('id' in ticketData) {
-          // Editing existing ticket - UPDATE editableUntil on every save
-          const updatedTicket = { 
-              ...ticketData,
-              editableUntil: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
-          } as Ticket;
-          if (isFromReferral) {
-              setReferrals(prev => prev.map(r => r.ticket.id === updatedTicket.id ? { ...r, ticket: updatedTicket } : r));
-          } else {
-              setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
-          }
-      } else {
-          // Creating new ticket
-          const lastTicketNum = tickets.length > 0 ? Math.max(...tickets.map(t => parseInt(t.ticketNumber.split('-')[2], 10) || 0)) : 100;
-          const newTicketNum = `T-${jalaali.toJalaali(now).jy}-${String(lastTicketNum + 1).padStart(3, '0')}`;
-          const newTicket = {
-              ...ticketData,
-              id: Date.now(),
-              ticketNumber: newTicketNum,
-              creationDateTime: formatJalaaliDateTime(now),
-              lastUpdateDate: formatJalaaliDateTime(now),
-              status: 'انجام نشده',
-              editableUntil: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
-              totalWorkDuration: 0,
-              updates: [],
-          } as Ticket;
-          setTickets(prev => [...prev, newTicket]);
-      }
-  };
-
-  const handleToggleWork = (itemId: number, isFromReferral: boolean) => {
-      const updateTicketWork = (ticket: Ticket): Ticket => {
-          if (ticket.status === 'در حال پیگیری' && ticket.workSessionStartedAt) {
-              const sessionStart = new Date(ticket.workSessionStartedAt);
-              const durationSeconds = (new Date().getTime() - sessionStart.getTime()) / 1000;
-              return { 
-                  ...ticket, 
-                  status: 'اتمام یافته',
-                  workSessionStartedAt: undefined, 
-                  totalWorkDuration: ticket.totalWorkDuration + durationSeconds 
-              };
-          } 
-          else if (ticket.status === 'انجام نشده') {
-              return { 
-                  ...ticket, 
-                  status: 'در حال پیگیری', 
-                  workSessionStartedAt: new Date().toISOString() 
-              };
-          }
-          return ticket;
-      };
-
-      if (isFromReferral) {
-          setReferrals(prev => prev.map(r => r.ticket.id === itemId ? { ...r, ticket: updateTicketWork(r.ticket) } : r));
-      } else {
-          setTickets(prev => prev.map(t => t.id === itemId ? updateTicketWork(t) : t));
-      }
-  };
-  
-  const handleReferTicket = (itemId: number, isFromReferral: boolean, referredBy: User, referredToUsername: string) => {
-      let ticketToRefer: Ticket;
-      
-      if (isFromReferral) {
-          const referral = referrals.find(r => r.ticket.id === itemId);
-          if (!referral) return;
-          ticketToRefer = referral.ticket;
-          setReferrals(prev => prev.filter(r => r.ticket.id !== itemId));
-      } else {
-          const ticket = tickets.find(t => t.id === itemId);
-          if (!ticket) return;
-          ticketToRefer = ticket;
-          setTickets(prev => prev.map(t => t.id === itemId ? { ...t, status: 'ارجاع شده' } : t));
-      }
-      
-      const now = new Date();
-      const newReferralTicket: Ticket = {
-          ...ticketToRefer,
-          id: Date.now(),
-          assignedTo: referredToUsername,
-          lastUpdateDate: formatJalaaliDateTime(now),
-          editableUntil: ticketToRefer.editableUntil,
-          updates: [
-            ...ticketToRefer.updates,
-            {
-              id: Date.now() + 1,
-              author: referredBy.username,
-              date: formatJalaaliDateTime(now),
-              description: `ارجاع از ${referredBy.username} به ${referredToUsername}`,
-              timeSpent: 0
+      try {
+        if ('id' in ticketData) {
+            const updatedTicketData = { 
+                ...ticketData,
+                editableUntil: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
+            };
+            const updatedTicket = await apiService.put(`/tickets/${updatedTicketData.id}`, updatedTicketData);
+            if (isFromReferral) {
+                setReferrals(prev => prev.map(r => r.ticket.id === updatedTicket.id ? { ...r, ticket: updatedTicket } : r));
+            } else {
+                setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
             }
-          ],
-      };
-      
-      const newReferral: Referral = {
-          id: newReferralTicket.id,
-          ticket: newReferralTicket,
-          referredBy: referredBy.username,
-          referredTo: referredToUsername,
-          referralDate: now.toISOString(),
-      };
-      setReferrals(prev => [...prev, newReferral]);
+        } else {
+            const lastTicketNum = tickets.length > 0 ? Math.max(...tickets.map(t => parseInt(t.ticketNumber.split('-')[2], 10) || 0)) : 100;
+            const newTicketNum = `T-${jalaali.toJalaali(now).jy}-${String(lastTicketNum + 1).padStart(3, '0')}`;
+            const newTicketData = {
+                ...ticketData,
+                ticketNumber: newTicketNum,
+                creationDateTime: formatJalaaliDateTime(now),
+                lastUpdateDate: formatJalaaliDateTime(now),
+                status: 'انجام نشده',
+                editableUntil: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
+                totalWorkDuration: 0,
+                updates: [],
+            } as Omit<Ticket, 'id'>;
+            const newTicket = await apiService.post('/tickets', newTicketData);
+            setTickets(prev => [...prev, newTicket]);
+        }
+      } catch (error) {
+          console.error("Failed to save ticket:", error);
+      }
   };
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    const landingPage = user.accessibleMenus.includes('dashboard') ? 'dashboard' : user.accessibleMenus[0] || 'no_access';
-    setActivePage(landingPage);
+  const handleToggleWork = async (itemId: number, isFromReferral: boolean) => {
+      const sourceArray = isFromReferral ? referrals.map(r => r.ticket) : tickets;
+      const ticket = sourceArray.find(t => t.id === itemId);
+      if (!ticket) return;
+
+      let updatedTicket: Ticket;
+      if (ticket.status === 'در حال پیگیری' && ticket.workSessionStartedAt) {
+          const sessionStart = new Date(ticket.workSessionStartedAt);
+          const durationSeconds = (new Date().getTime() - sessionStart.getTime()) / 1000;
+          updatedTicket = { ...ticket, status: 'اتمام یافته', workSessionStartedAt: undefined, totalWorkDuration: ticket.totalWorkDuration + durationSeconds };
+      } else if (ticket.status === 'انجام نشده') {
+          updatedTicket = { ...ticket, status: 'در حال پیگیری', workSessionStartedAt: new Date().toISOString() };
+      } else {
+          return;
+      }
+
+      try {
+        await apiService.put(`/tickets/${updatedTicket.id}`, updatedTicket);
+        if (isFromReferral) {
+            setReferrals(prev => prev.map(r => r.ticket.id === itemId ? { ...r, ticket: updatedTicket } : r));
+        } else {
+            setTickets(prev => prev.map(t => t.id === itemId ? updatedTicket : t));
+        }
+      } catch (error) {
+        console.error("Failed to toggle work:", error);
+      }
   };
   
-  const handleLogout = () => setCurrentUser(null);
+  const handleReferTicket = async (ticketId: number, isFromReferral: boolean, referredBy: User, referredToUsername: string) => {
+    try {
+        const referralData = {
+            ticket_id: ticketId,
+            referredBy: referredBy.username,
+            referredTo: referredToUsername,
+            referralDate: new Date().toISOString()
+        };
+        const newReferral = await apiService.post('/referrals', referralData);
+        
+        // Optimistic update on the client
+        setReferrals(prev => [...prev, newReferral]);
+        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: 'ارجاع شده' } : t));
 
+    } catch (error) {
+        console.error("Failed to refer ticket:", error);
+        // Optionally revert optimistic update on error
+    }
+  };
+
+  const handleLogin = async (username: string, password: string): Promise<User | null> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const user = await apiService.post('/login', { username, password });
+      setCurrentUser(user);
+      const landingPage = user.accessibleMenus.includes('dashboard') ? 'dashboard' : user.accessibleMenus[0] || 'no_access';
+      setActivePage(landingPage);
+      return user;
+    } catch (err) {
+      setError("نام کاربری یا رمز عبور اشتباه است.");
+      return null;
+    } finally {
+        setLoading(false);
+    }
+  };
+  
+  const handleLogout = () => {
+      setCurrentUser(null);
+      // Clear all data on logout
+      setUsers([]);
+      setCustomers([]);
+      setPurchaseContracts([]);
+      setSupportContracts([]);
+      setTickets([]);
+      setReferrals([]);
+  };
+
+  if (!currentUser) return <LoginPage onLogin={handleLogin} />;
+  
   if (loading) {
       return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
@@ -207,8 +315,6 @@ function App() {
   if (error) {
        return <div className="flex h-screen items-center justify-center text-red-500">{error}</div>;
   }
-
-  if (!currentUser) return <LoginPage onLogin={handleLogin} users={users} />;
   
   const hasAccess = (pageId: string) => currentUser.accessibleMenus.includes(pageId as any);
 

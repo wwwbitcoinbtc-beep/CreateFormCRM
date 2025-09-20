@@ -1,28 +1,27 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import Alert from '../components/Alert';
+import { LoadingSpinnerIcon } from '../components/icons/LoadingSpinnerIcon';
 
 interface LoginPageProps {
-  onLogin: (user: User) => void;
-  users: User[];
+  onLogin: (username: string, password: string) => Promise<User | null>;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, users }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors([]);
+    setLoading(true);
 
-    const user = users.find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
-    );
-
-    if (user) {
-      onLogin(user);
-    } else {
+    const user = await onLogin(username, password);
+    
+    setLoading(false);
+    if (!user) {
       setErrors(['نام کاربری یا رمز عبور اشتباه است.']);
     }
   };
@@ -53,7 +52,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, users }) => {
                 autoComplete="username"
                 required
                 className="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
-                placeholder="مثلا: ali.rezaei"
+                placeholder="مثلا: admin"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -78,9 +77,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, users }) => {
           <div className="pt-2">
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-semibold rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-semibold rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              ورود
+              {loading ? <LoadingSpinnerIcon /> : 'ورود'}
             </button>
           </div>
         </form>
