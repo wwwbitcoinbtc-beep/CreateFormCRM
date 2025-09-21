@@ -5,172 +5,119 @@ import cors from 'cors';
 import knex from 'knex';
 import bcrypt from 'bcrypt';
 import knexConfig from './knexfile.js';
+import http from 'http';
+import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all origins for development
+    methods: ["GET", "POST"]
+  }
+});
+
 const db = knex(knexConfig.development);
-
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_default_super_secret_key';
 
-// Middlewares
+// --- Middlewares ---
 app.use(cors());
 app.use(express.json());
 
+// Logging Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
-// API Routes
+
+// --- JWT Verification Middleware ---
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (token == null) {
+        console.log('Access denied: No token provided');
+        return res.sendStatus(401); // Unauthorized
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) {
+            console.log('Access denied: Invalid token', err.message);
+            return res.sendStatus(403); // Forbidden
+        }
+        req.user = user;
+        next();
+    });
+};
+
+
+// --- API Routes ---
+
+// Public route: No token needed
 app.get('/', (req, res) => {
   res.send('<h1>CRM Backend Server is running</h1>');
 });
 
-// --- Users API ---
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await db('users').select('*');
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching users', error: err });
-  }
-});
-
-// --- Customers API ---
-app.get('/api/customers', async (req, res) => {
-  try {
-    const customers = await db('customers').select('*');
-    res.json(customers);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching customers', error: err });
-  }
-});
-
-// --- Purchase Contracts API ---
-app.get('/api/purchase-contracts', async (req, res) => {
-  try {
-    const contracts = await db('purchase_contracts').select('*');
-    res.json(contracts);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching purchase contracts', error: err });
-  }
-});
-
-// --- Support Contracts API ---
-app.get('/api/support-contracts', async (req, res) => {
-  try {
-    const contracts = await db('support_contracts').select('*');
-    res.json(contracts);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching support contracts', error: err });
-  }
-});
-
-// --- Tickets API ---
-app.get('/api/tickets', async (req, res) => {
-  try {
-    const tickets = await db('tickets').select('*');
-    res.json(tickets);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching tickets', error: err });
-  }
-});
-
-// --- Referrals API ---
-app.get('/api/referrals', async (req, res) => {
-  try {
-    const referrals = await db('referrals')
-      .join('tickets', 'referrals.ticket_id', '=', 'tickets.id')
-      .select(
-        'referrals.id as id',
-        'referrals.referredBy',
-        'referrals.referredTo',
-        'referrals.referralDate',
-        'tickets.id as ticket_id',
-        'tickets.ticketNumber',
-        'tickets.title',
-        'tickets.description',
-        'tickets.customerId',
-        'tickets.creationDateTime',
-        'tickets.lastUpdateDate',
-        'tickets.status',
-        'tickets.priority',
-        'tickets.type',
-        'tickets.channel',
-        'tickets.assignedTo',
-        'tickets.attachments',
-        'tickets.editableUntil',
-        'tickets.workSessionStartedAt',
-        'tickets.totalWorkDuration'
-      );
-
-    const result = referrals.map(r => ({
-      id: r.id,
-      referredBy: r.referredBy,
-      referredTo: r.referredTo,
-      referralDate: r.referralDate,
-      ticket: {
-        id: r.ticket_id,
-        ticketNumber: r.ticketNumber,
-        title: r.title,
-        description: r.description,
-        customerId: r.customerId,
-        creationDateTime: r.creationDateTime,
-        lastUpdateDate: r.lastUpdateDate,
-        status: r.status,
-        priority: r.priority,
-        type: r.type,
-        channel: r.channel,
-        assignedTo: r.assignedTo,
-        attachments: r.attachments,
-        editableUntil: r.editableUntil,
-        workSessionStartedAt: r.workSessionStartedAt,
-        totalWorkDuration: r.totalWorkDuration,
-        updates: [], // Note: updates are not fetched in this simplified query
-      }
-    }));
-    
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching referrals:', err);
-    res.status(500).json({ message: 'Error fetching referrals', error: err.message });
-  }
-});
-
-// --- Login API ---
+// Public route: Login
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
     try {
-        // Find the user by username
         const user = await db('users').where({ username }).first();
-
         if (user) {
-            // Compare the provided password with the stored hash
             const match = await bcrypt.compare(password, user.password);
             if (match) {
-                // Passwords match
+                // Sign JWT
                 const { password, ...userWithoutPassword } = user;
-                res.json(userWithoutPassword);
+                const token = jwt.sign(userWithoutPassword, JWT_SECRET, { expiresIn: '24h' });
+                console.log(`User '${username}' logged in successfully.`);
+                res.json({ token, user: userWithoutPassword });
             } else {
-                // Passwords don't match
+                console.log(`Login failed for user '${username}': Invalid password`);
                 res.status(401).json({ message: 'Invalid credentials' });
             }
         } else {
-            // User not found
+            console.log(`Login failed: User '${username}' not found`);
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (err) {
-        res.status(500).json({ message: 'Login failed', error: err });
+        console.error('Login error:', err);
+        res.status(500).json({ message: 'Login failed', error: err.message });
     }
 });
 
-// Generic CRUD operations
+
+// --- Protected Routes ---
+// All routes below this point will use the verifyToken middleware
+app.use('/api', verifyToken);
+
 
 // Helper to parse array fields
 const parseArrayFields = (body, fields) => {
     const parsedBody = { ...body };
     fields.forEach(field => {
-        if (parsedBody[field]) {
+        if (parsedBody[field] && typeof parsedBody[field] !== 'string') {
             parsedBody[field] = JSON.stringify(parsedBody[field]);
         }
     });
     return parsedBody;
 };
+
+// Generic GET ALL
+app.get('/api/:table', async (req, res) => {
+    try {
+        const items = await db(req.params.table).select('*');
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ message: `Error fetching from ${req.params.table}`, error: err.message });
+    }
+});
+
 
 // POST (Create)
 app.post('/api/:table', async (req, res) => {
@@ -183,10 +130,23 @@ app.post('/api/:table', async (req, res) => {
         tickets: ['attachments', 'updates']
     };
     try {
-        const body = parseArrayFields(req.body, arrayFields[table] || []);
-        const [newItem] = await db(table).insert(body).returning('*');
+        const body = { 
+            ...req.body,
+            creationDateTime: new Date().toISOString(), // Set creation time on server
+            lastUpdateDate: new Date().toISOString()   // Set update time on server
+        };
+        const parsedBody = parseArrayFields(body, arrayFields[table] || []);
+        
+        const [newItem] = await db(table).insert(parsedBody).returning('*');
+        console.log(`New item created in '${table}':`, newItem);
+
+        // Emit a socket event for real-time updates
+        io.emit(`${table}_created`, newItem);
+        console.log(`Socket event '${table}_created' emitted.`);
+        
         res.status(201).json(newItem);
     } catch (err) {
+        console.error(`Error creating item in ${table}:`, err);
         res.status(500).json({ message: `Error creating item in ${table}`, error: err.message });
     }
 });
@@ -202,14 +162,24 @@ app.put('/api/:table/:id', async (req, res) => {
         tickets: ['attachments', 'updates']
     };
      try {
-        const body = parseArrayFields(req.body, arrayFields[table] || []);
-        const [updatedItem] = await db(table).where({ id }).update(body).returning('*');
+        const body = {
+            ...req.body,
+            lastUpdateDate: new Date().toISOString() // Set update time on server
+        };
+        const parsedBody = parseArrayFields(body, arrayFields[table] || []);
+        const [updatedItem] = await db(table).where({ id }).update(parsedBody).returning('*');
+        
         if (updatedItem) {
+            console.log(`Item updated in '${table}' (ID: ${id}):`, updatedItem);
+            // Emit a socket event for real-time updates
+            io.emit(`${table}_updated`, updatedItem);
+            console.log(`Socket event '${table}_updated' emitted.`);
             res.json(updatedItem);
         } else {
             res.status(404).json({ message: 'Item not found' });
         }
     } catch (err) {
+        console.error(`Error updating item in ${table} (ID: ${id}):`, err);
         res.status(500).json({ message: `Error updating item in ${table}`, error: err.message });
     }
 });
@@ -221,33 +191,33 @@ app.delete('/api/:table/:id', async (req, res) => {
     try {
         const count = await db(table).where({ id }).del();
         if (count > 0) {
-            res.status(204).send(); // No Content
+            console.log(`Item deleted from '${table}' (ID: ${id})`);
+            // Emit a socket event for real-time updates
+            io.emit(`${table}_deleted`, { id });
+            console.log(`Socket event '${table}_deleted' emitted.`);
+            res.status(204).send();
         } else {
             res.status(404).json({ message: 'Item not found' });
         }
     } catch (err) {
+        console.error(`Error deleting item from ${table} (ID: ${id}):`, err);
         res.status(500).json({ message: `Error deleting item from ${table}`, error: err.message });
     }
 });
 
-// DELETE MANY
-app.post('/api/:table/delete-many', async (req, res) => {
-    const { table } = req.params;
-    const { ids } = req.body; // Expect an array of IDs
-    if (!ids || !Array.isArray(ids)) {
-        return res.status(400).json({ message: 'Invalid request: "ids" must be an array.' });
-    }
-    try {
-        const count = await db(table).whereIn('id', ids).del();
-        res.status(200).json({ message: `${count} items deleted successfully.` });
-    } catch (err) {
-        res.status(500).json({ message: `Error deleting items from ${table}`, error: err.message });
-    }
+
+// --- Socket.io Connection ---
+io.on('connection', (socket) => {
+  console.log('A user connected via Socket.io:', socket.id);
+  
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
 });
 
 
-// Start server
-app.listen(PORT, () => {
+// --- Start Server ---
+server.listen(PORT, () => {
   console.log(`Server is listening on *:${PORT}`);
   db.raw('SELECT 1').then(() => {
     console.log('SQL Server connected successfully.');

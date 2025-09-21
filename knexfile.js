@@ -1,6 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Helper function to parse boolean from string environment variables
+const parseBool = (val) => {
+    if (typeof val === 'string') {
+        return val.toLowerCase() === 'true';
+    }
+    return val;
+}
+
 const config = {
   development: {
     client: 'mssql',
@@ -8,15 +16,19 @@ const config = {
       server: process.env.DB_SERVER || 'DESKTOP-T42H17N',
       user: process.env.DB_USER || 'sa',
       password: process.env.DB_PASSWORD || '123',
-      database: process.env.DB_DATABASE || 'crmbackend',
+      database: process.env.DB_DATABASE || 'CrmRunWeb', // Corrected database name
       options: {
-        encrypt: process.env.DB_ENCRYPT === 'true',
-        trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true'
+        // Read from environment variables
+        encrypt: parseBool(process.env.DB_ENCRYPT), 
+        trustServerCertificate: parseBool(process.env.DB_TRUST_SERVER_CERTIFICATE)
       }
     },
     migrations: {
       tableName: 'knex_migrations',
       directory: './migrations'
+    },
+    seeds: {
+      directory: './seeds'
     }
   },
 };
