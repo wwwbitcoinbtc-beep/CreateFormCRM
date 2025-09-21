@@ -3,6 +3,7 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import knex from 'knex';
+import bcrypt from 'bcrypt';
 import knexConfig from './knexfile.js';
 
 const app = express();
@@ -135,12 +136,22 @@ app.get('/api/referrals', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = await db('users').where({ username, password }).first();
+        // Find the user by username
+        const user = await db('users').where({ username }).first();
+
         if (user) {
-            // In a real app, don't send the password back
-            const { password, ...userWithoutPassword } = user;
-            res.json(userWithoutPassword);
+            // Compare the provided password with the stored hash
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                // Passwords match
+                const { password, ...userWithoutPassword } = user;
+                res.json(userWithoutPassword);
+            } else {
+                // Passwords don't match
+                res.status(401).json({ message: 'Invalid credentials' });
+            }
         } else {
+            // User not found
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (err) {
