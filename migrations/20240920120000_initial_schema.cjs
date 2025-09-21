@@ -162,22 +162,6 @@ exports.up = function(knex) {
         table.text('reason');
         table.string('status', 30);
         table.timestamp('requestedAt').notNullable();
-    })
-    .createTable('missions', function (table) {
-        table.increments('id').primary();
-        table.string('title', 255);
-        table.text('description');
-        table.integer('assignedTo').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
-        table.integer('createdBy').unsigned().notNullable().references('id').inTable('users');
-        table.timestamp('startTimestamp').notNullable();
-        table.timestamp('endTimestamp').notNullable();
-        table.boolean('completed').defaultTo(false);
-    })
-    .createTable('mission_tasks', function (table) {
-        table.increments('id').primary();
-        table.integer('mission_id').unsigned().notNullable().references('id').inTable('missions').onDelete('CASCADE');
-        table.text('description');
-        table.boolean('completed').defaultTo(false);
     });
 };
 
@@ -187,8 +171,6 @@ exports.up = function(knex) {
  */
 exports.down = function(knex) {
   return knex.schema
-    .dropTableIfExists('mission_tasks')
-    .dropTableIfExists('missions')
     .dropTableIfExists('leave_requests')
     .dropTableIfExists('attendance_records')
     .dropTableIfExists('referrals')
