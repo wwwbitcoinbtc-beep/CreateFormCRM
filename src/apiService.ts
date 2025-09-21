@@ -1,4 +1,3 @@
-
 import io from 'socket.io-client';
 
 // EXPORT the socket so it can be imported by other modules.
@@ -56,32 +55,20 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
 
 const apiService = {
     // --- Auth ---
-    login: async (credentials: object) => {
-        const { token, user } = await request('/login', { method: 'POST', body: JSON.stringify(credentials) });
-        try {
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-        } catch (e) {
-            console.error("Could not access localStorage.");
-        }
-        return { token, user };
-    },
+    login: (credentials: object) => request('/login', { method: 'POST', body: JSON.stringify(credentials) }),
     logout: () => {
         try {
             localStorage.removeItem('token');
-            localStorage.removeItem('user');
         } catch (e) {
             console.error("Could not access localStorage.");
         }
     },
-    getMe: () => request('/auth/me'),
 
     // --- Generic CRUD ---
     getAll: (tableName: string) => request(`/${tableName}`),
     create: (tableName: string, data: object) => request(`/${tableName}`, { method: 'POST', body: JSON.stringify(data) }),
     update: (tableName: string, id: number | string, data: object) => request(`/${tableName}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (tableName: string, id: number | string) => request(`/${tableName}/${id}`, { method: 'DELETE' }),
-    deleteMany: (tableName: string, ids: (number | string)[]) => request(`/${tableName}`, { method: 'DELETE', body: JSON.stringify({ ids }) }),
 };
 
 export default apiService;

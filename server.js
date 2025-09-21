@@ -11,11 +11,17 @@ import jwt from 'jsonwebtoken';
 
 const app = express();
 const server = http.createServer(app);
+
+// --- CORS Configuration ---
+// The frontend is running on https://localhost:9002, so we must explicitly allow it.
+const corsOptions = {
+  origin: 'https://localhost:9002',
+  optionsSuccessStatus: 200
+};
+
+
 const io = new Server(server, {
-  cors: {
-    origin: "*", // Allow all origins for development
-    methods: ["GET", "POST"]
-  }
+  cors: corsOptions // Use the same CORS options for Socket.IO
 });
 
 const db = knex(knexConfig.development);
@@ -23,7 +29,7 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_default_super_secret_key';
 
 // --- Middlewares ---
-app.use(cors());
+app.use(cors(corsOptions)); // Apply CORS middleware to all Express routes
 app.use(express.json());
 
 // Logging Middleware

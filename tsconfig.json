@@ -18,12 +18,25 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src", 
+    "vite.config.ts",
+    "App.tsx",
+    "index.tsx",
+    "apiService.ts",
+    "types.ts",
+    "Sidebar.tsx",
+    "components",
+    "pages",
+    "utils"
+  ]
 }

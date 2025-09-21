@@ -12,7 +12,10 @@
     "migrate": "knex migrate:latest"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@google/genai": "latest",
+    "@mui/material": "^7.3.2",
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
